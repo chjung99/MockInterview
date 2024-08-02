@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mock Interview</title>
+</head>
+<body>
+    <h1>Mock Interview</h1>
+    <form action="/draw" method="post">
+        <label for="num_questions">Number of questions per sheet:</label>
+        <input type="number" id="num_questions" name="num_questions" min="1" required>
+        <button type="submit">Draw Questions</button>
+    </form>
+    <br>
+    <form action="/next" method="post">
+        <button type="submit">Next Question</button>
+    </form>
+    <br>
+    <div>
+        <h2>Question:</h2>
+        <p>{{ question }}</p>
+    </div>
+</body>
+</html>
