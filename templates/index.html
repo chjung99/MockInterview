@@ -15,9 +15,9 @@
         <button type="submit">다음 질문</button>
     </form>
     <br>
-    <div>
+    <div id="question-container">
         <h2>질문:</h2>
-        <p>{{ question }}</p>
+        <p id="question">{{ question }}</p>
         {% if audio_file %}
             <audio id="audio-player" controls>
                 <source src="{{ url_for('static', path=audio_file) }}" type="audio/mpeg">
@@ -25,9 +25,29 @@
             </audio>
         {% endif %}
     </div>
+    <br>
+    <div>
+        <h2>카메라 피드:</h2>
+        <video id="video" width="640" height="480" autoplay></video>
+    </div>
+    <br>
+    <div>
+        <h2>녹화:</h2>
+        <button id="record-button">녹화 시작</button>
+        <button id="stop-button" disabled>녹화 중지</button>
+        <a id="download-link" style="display:none;">다운로드</a>
+    </div>
     <script>
+        let videoStream;
+        let mediaRecorder;
+        let videoChunks = [];
+        const video = document.getElementById('video');
+        const recordButton = document.getElementById('record-button');
+        const stopButton = document.getElementById('stop-button');
+        const downloadLink = document.getElementById('download-link');
+
         document.getElementById('next-form').addEventListener('submit', function(event) {
-            event.preventDefault();  // 기본 폼 제출 동작을 막음
+            event.preventDefault();
             var form = event.target;
             var formData = new FormData(form);
 
@@ -35,20 +55,77 @@
                 method: form.method,
                 body: formData
             })
-            .then(response => response.text())
-            .then(html => {
-                // 새 HTML로 페이지를 업데이트
-                document.open();
-                document.write(html);
-                document.close();
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('question').textContent = data.question;
 
-                // 오디오 파일이 있으면 자동으로 재생, 배속 1.25배로 설정
-                var audio = document.getElementById('audio-player');
-                if (audio) {
-                    audio.playbackRate = 1.25;  // 배속 설정
-                    audio.play();
+                var audioContainer = document.getElementById('question-container');
+                var oldAudio = document.getElementById('audio-player');
+                if (oldAudio) {
+                    oldAudio.remove();
+                }
+
+                if (data.audio_file) {
+                    var newAudio = document.createElement('audio');
+                    newAudio.id = 'audio-player';
+                    newAudio.controls = true;
+                    var source = document.createElement('source');
+                    source.src = data.audio_file;
+                    source.type = 'audio/mpeg';
+                    newAudio.appendChild(source);
+                    audioContainer.appendChild(newAudio);
+                    newAudio.playbackRate = 1.25;
+                    newAudio.play();
                 }
             });
+        });
+
+        async function startVideo() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                video.srcObject = videoStream;
+                video.play();
+
+                // 모든 비디오 트랙은 출력되지 않도록 설정
+                videoStream.getAudioTracks().forEach(track => track.enabled = false);
+            } catch (err) {
+                console.log("카메라 접근 실패: " + err);
+            }
+        }
+
+        startVideo();
+
+        recordButton.addEventListener('click', function() {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+                mediaRecorder.start();
+                recordButton.disabled = true;
+                stopButton.disabled = false;
+                downloadLink.style.display = 'none';
+
+                mediaRecorder.addEventListener('dataavailable', event => {
+                    videoChunks.push(event.data);
+                });
+
+                mediaRecorder.addEventListener('stop', () => {
+                    const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
+                    const videoUrl = URL.createObjectURL(videoBlob);
+                    downloadLink.href = videoUrl;
+                    downloadLink.download = 'recording.webm';
+                    downloadLink.textContent = '녹화 파일 다운로드';
+                    downloadLink.style.display = 'block';
+
+                    videoChunks = [];
+                });
+            }).catch(function(err) {
+                console.log("녹화 장치 접근 실패: " + err);
+            });
+        });
+
+        stopButton.addEventListener('click', function() {
+            mediaRecorder.stop();
+            recordButton.disabled = false;
+            stopButton.disabled = true;
         });
     </script>
 </body>
