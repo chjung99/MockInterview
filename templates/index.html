@@ -1,23 +1,55 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Mock Interview</title>
+    <title>모의 면접</title>
 </head>
 <body>
-    <h1>Mock Interview</h1>
+    <h1>모의 면접</h1>
     <form action="/draw" method="post">
-        <label for="num_questions">Number of questions per sheet:</label>
+        <label for="num_questions">시트당 질문 수:</label>
         <input type="number" id="num_questions" name="num_questions" min="1" required>
-        <button type="submit">Draw Questions</button>
+        <button type="submit">질문 뽑기</button>
     </form>
     <br>
-    <form action="/next" method="post">
-        <button type="submit">Next Question</button>
+    <form action="/next" method="post" id="next-form">
+        <button type="submit">다음 질문</button>
     </form>
     <br>
     <div>
-        <h2>Question:</h2>
+        <h2>질문:</h2>
         <p>{{ question }}</p>
+        {% if audio_file %}
+            <audio id="audio-player" controls>
+                <source src="{{ url_for('static', path=audio_file) }}" type="audio/mpeg">
+                브라우저가 오디오 요소를 지원하지 않습니다.
+            </audio>
+        {% endif %}
     </div>
+    <script>
+        document.getElementById('next-form').addEventListener('submit', function(event) {
+            event.preventDefault();  // 기본 폼 제출 동작을 막음
+            var form = event.target;
+            var formData = new FormData(form);
+
+            fetch(form.action, {
+                method: form.method,
+                body: formData
+            })
+            .then(response => response.text())
+            .then(html => {
+                // 새 HTML로 페이지를 업데이트
+                document.open();
+                document.write(html);
+                document.close();
+
+                // 오디오 파일이 있으면 자동으로 재생, 배속 1.25배로 설정
+                var audio = document.getElementById('audio-player');
+                if (audio) {
+                    audio.playbackRate = 1.25;  // 배속 설정
+                    audio.play();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
