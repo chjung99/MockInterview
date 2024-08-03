@@ -2,40 +2,127 @@
 <html>
 <head>
     <title>모의 면접</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 90%;
+            max-width: 1200px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .left, .right {
+            width: 48%;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        form, .right-section {
+            background: #fff;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="number"], button {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #question-container {
+            margin-top: 10px;
+            height: 150px; /* 고정 높이 설정 */
+            overflow-y: auto;
+        }
+        #video {
+            display: block;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            width: 100%;
+            height: auto;
+        }
+        #record-button, #stop-button {
+            width: 48%;
+            display: inline-block;
+            box-sizing: border-box;
+        }
+        #download-link {
+            display: none;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .flex-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-    <h1>모의 면접</h1>
-    <form action="/draw" method="post">
-        <label for="num_questions">시트당 질문 수:</label>
-        <input type="number" id="num_questions" name="num_questions" min="1" required>
-        <button type="submit">질문 뽑기</button>
-    </form>
-    <br>
-    <form action="/next" method="post" id="next-form">
-        <button type="submit">다음 질문</button>
-    </form>
-    <br>
-    <div id="question-container">
-        <h2>질문:</h2>
-        <p id="question">{{ question }}</p>
-        {% if audio_file %}
-            <audio id="audio-player" controls>
-                <source src="{{ url_for('static', path=audio_file) }}" type="audio/mpeg">
-                브라우저가 오디오 요소를 지원하지 않습니다.
-            </audio>
-        {% endif %}
-    </div>
-    <br>
-    <div>
-        <h2>카메라 피드:</h2>
-        <video id="video" width="640" height="480" autoplay></video>
-    </div>
-    <br>
-    <div>
-        <h2>녹화:</h2>
-        <button id="record-button">녹화 시작</button>
-        <button id="stop-button" disabled>녹화 중지</button>
-        <a id="download-link" style="display:none;">다운로드</a>
+    <div class="container">
+        <div class="left">
+            <h1>모의 면접</h1>
+            <video id="video" autoplay></video>
+        </div>
+        <div class="right">
+            <form action="/draw" method="post">
+                <label for="num_questions">시트당 질문 수:</label>
+                <input type="number" id="num_questions" name="num_questions" min="1" required>
+                <button type="submit">질문 뽑기</button>
+            </form>
+            <form action="/next" method="post" id="next-form">
+                <button type="submit">다음 질문</button>
+            </form>
+            <div id="question-container" class="right-section">
+                <h2>질문:</h2>
+                <p id="question">{{ question }}</p>
+                {% if audio_file %}
+                    <audio id="audio-player" controls>
+                        <source src="{{ url_for('static', path=audio_file) }}" type="audio/mpeg">
+                        브라우저가 오디오 요소를 지원하지 않습니다.
+                    </audio>
+                {% endif %}
+            </div>
+            <div class="right-section flex-container">
+                <button id="record-button">녹화 시작</button>
+                <button id="stop-button" disabled>녹화 중지</button>
+            </div>
+            <div class="right-section" id="download-link-container">
+                <a id="download-link">다운로드</a>
+            </div>
+        </div>
     </div>
     <script>
         let videoStream;
