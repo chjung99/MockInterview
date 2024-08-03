@@ -20,7 +20,7 @@ class MockInterview:
         self.current_questions = []
         self.mandatory_sheets = ["필수"]
         self.audio_dir = "static/audio"
-        self.total_q_num = len(self.questions)
+        self.total_question_number = 0
         os.makedirs(self.audio_dir, exist_ok=True)
 
     def load_questions(self):
@@ -51,7 +51,7 @@ class MockInterview:
                     available_questions.extend(random.sample(q_list, len(q_list)))
 
         self.current_questions = [mandatory_questions[0]] + available_questions + [mandatory_questions[-1]]
-
+        self.total_question_number = len(self.current_questions)
         for i, question in enumerate(self.current_questions):
             self.generate_audio(question, f"question_{i}.mp3")
 
@@ -63,8 +63,8 @@ class MockInterview:
     def get_next_question(self):
         if not self.current_questions:
             return "더 이상 질문이 없습니다.", ""
+        audio_file = f"/static/audio/question_{self.total_question_number - len(self.current_questions)}.mp3"
         question = self.current_questions.pop(0)
-        audio_file = f"/static/audio/question_{len(self.questions) - len(self.current_questions)}.mp3"
         return question, audio_file
 
 
