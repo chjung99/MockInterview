@@ -98,6 +98,11 @@
         </div>
         <div class="right">
             <form action="/draw" method="post">
+                <label for="mode">모드 선택:</label>
+                <select id="mode" name="mode" required>
+                    <option value="general">일반 모드</option>
+                    <option value="cs">CS 모드</option>
+                </select>
                 <label for="num_questions">시트당 질문 수:</label>
                 <input type="number" id="num_questions" name="num_questions" min="1" required>
                 <button type="submit">질문 뽑기</button>

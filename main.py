@@ -19,6 +19,7 @@ class MockInterview:
         self.questions = self.load_questions()
         self.current_questions = []
         self.mandatory_sheets = ["필수"]
+        self.cs_sheet = "CS"
         self.audio_dir = "static/audio"
         self.total_question_number = 0
         os.makedirs(self.audio_dir, exist_ok=True)
@@ -31,26 +32,34 @@ class MockInterview:
             questions[sheet] = df.iloc[:, 0].tolist()
         return questions
 
-    def draw_random_questions(self, num_questions):
+    def draw_random_questions(self, num_questions, mode):
         self.current_questions.clear()
 
-        mandatory_questions = []
-        for sheet in self.mandatory_sheets:
-            if sheet in self.questions:
-                q_list = self.questions[sheet]
-                if q_list:
-                    mandatory_questions.append(q_list[0])
-                    mandatory_questions.append(q_list[-1])
+        if mode == "cs":
+            cs_questions = self.questions.get(self.cs_sheet, [])
+            if len(cs_questions) >= num_questions:
+                self.current_questions = random.sample(cs_questions, num_questions)
+            else:
+                self.current_questions = cs_questions
+        else:
+            mandatory_questions = []
+            for sheet in self.mandatory_sheets:
+                if sheet in self.questions:
+                    q_list = self.questions[sheet]
+                    if q_list:
+                        mandatory_questions.append(q_list[0])
+                        mandatory_questions.append(q_list[-1])
 
-        available_questions = []
-        for sheet, q_list in self.questions.items():
-            if sheet not in self.mandatory_sheets:
-                if len(q_list) >= num_questions:
-                    available_questions.extend(random.sample(q_list, num_questions))
-                else:
-                    available_questions.extend(random.sample(q_list, len(q_list)))
+            available_questions = []
+            for sheet, q_list in self.questions.items():
+                if sheet not in self.mandatory_sheets:
+                    if len(q_list) >= num_questions:
+                        available_questions.extend(random.sample(q_list, num_questions))
+                    else:
+                        available_questions.extend(random.sample(q_list, len(q_list)))
 
-        self.current_questions = [mandatory_questions[0]] + available_questions + [mandatory_questions[-1]]
+            self.current_questions = [mandatory_questions[0]] + available_questions + [mandatory_questions[-1]]
+
         self.total_question_number = len(self.current_questions)
         for i, question in enumerate(self.current_questions):
             self.generate_audio(question, f"question_{i}.mp3")
@@ -81,8 +90,8 @@ async def get_next_question(request: Request):
     return {"question": question, "audio_file": audio_file}
 
 @app.post("/draw", response_class=HTMLResponse)
-async def draw_questions(request: Request, num_questions: int = Form(...)):
-    interview.draw_random_questions(num_questions)
+async def draw_questions(request: Request, num_questions: int = Form(...), mode: str = Form(...)):
+    interview.draw_random_questions(num_questions, mode)
     return templates.TemplateResponse("index.html", {"request": request, "question": "질문이 뽑혔습니다. '다음'을 눌러 시작하세요.", "audio_file": ""})
 
 
